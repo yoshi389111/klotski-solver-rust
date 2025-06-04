@@ -4,28 +4,32 @@ use super::piece::Piece;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
-    pub image: BitPattern,
+    pub pattern: BitPattern,
 }
+
+// --- Constants ---
 
 static EDGE_TOP: BitPattern = BitPattern::new(0xffff_0000_0000_0000_0000);
 static EDGE_BOTTOM: BitPattern = BitPattern::new(0x0000_0000_0000_0000_ffff);
 static EDGE_LEFT: BitPattern = BitPattern::new(0xf000_f000_f000_f000_f000);
 static EDGE_RIGHT: BitPattern = BitPattern::new(0x000f_000f_000f_000f_000f);
 
+// --- Implementation ---
+
 impl Board {
     /// Creates a new `Board` from a 128-bit integer representation.
-    pub const fn new(input: u128) -> Self {
-        Self::from_bitpattern(BitPattern::new(input))
+    pub const fn new(image: u128) -> Self {
+        Self::from_bitpattern(BitPattern::new(image))
     }
 
     /// Creates a new `Board` from a `BitPattern`.
-    pub const fn from_bitpattern(image: BitPattern) -> Self {
-        Self { image }
+    pub const fn from_bitpattern(pattern: BitPattern) -> Self {
+        Self { pattern }
     }
 
     /// Attempts to move the specified piece in the given direction.
     pub fn move_piece(&self, piece: Piece, direction: Direction) -> Option<Board> {
-        let piece_mask = self.image.mask_of(piece);
+        let piece_mask = self.pattern.mask_of(piece);
         let edge_mask = match direction {
             Direction::Up => EDGE_TOP,
             Direction::Down => EDGE_BOTTOM,
@@ -36,19 +40,21 @@ impl Board {
             // The target piece is on the edge.
             return None;
         }
-        let other_pieces = self.image & !piece_mask;
+        let other_pieces = self.pattern & !piece_mask;
         let moved_piece_mask = piece_mask.moved(direction);
         if (other_pieces & moved_piece_mask).is_not_empty() {
             // There is another piece in the direction of the target piece.
             return None;
         }
 
-        let target_piece = self.image & piece_mask;
+        let target_piece = self.pattern & piece_mask;
         let moved_target_piece = target_piece.moved(direction);
         let next_board = Board::from_bitpattern(other_pieces | moved_target_piece);
         Some(next_board)
     }
 }
+
+// --- Tests ---
 
 #[cfg(test)]
 mod tests {
@@ -58,7 +64,7 @@ mod tests {
     fn test_board() {
         let board = Board::new(0x2113_2113_4455_6789_6009);
         let expected_image = BitPattern::new(0x2113_2113_4455_6789_6009);
-        assert_eq!(board.image, expected_image);
+        assert_eq!(board.pattern, expected_image);
     }
 
     #[test]

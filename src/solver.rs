@@ -1,20 +1,84 @@
 pub mod bit_pattern;
 pub mod board;
-mod board_key;
 pub mod direction;
-pub mod move_path;
 pub mod piece;
 pub mod rule;
-pub mod state;
 mod visited_history;
 
 use super::bfs;
-use board_key::BoardKey;
+use bit_pattern::BitPattern;
+use board::Board;
 use direction::Direction;
-use move_path::MovePath;
+use piece::Piece;
 use rule::Rule;
-use state::State;
 use visited_history::VisitedHistory;
+
+// --- Structs and Enums ---
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct State {
+    pub board: Board,
+    pub piece: Option<Piece>,
+    pub path: MovePath,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum MovePath {
+    None,
+    One(Direction),
+    Two(Direction, Direction),
+}
+
+impl std::fmt::Display for MovePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MovePath::None => write!(f, "None"),
+            MovePath::One(d) => write!(f, "{d}"),
+            MovePath::Two(d1, d2) => write!(f, "{d1} and {d2}"),
+        }
+    }
+}
+
+/// Represents a unique key for a board state, which is used to identify and compare different board configurations.
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub struct BoardKey {
+    key: BitPattern,
+}
+
+impl BoardKey {
+    /// Creates a new `BoardKey` based on the provided rule and board.
+    pub fn create(rule: &Rule, board: &Board) -> BoardKey {
+        let min_image = Self::min(board.pattern, board.pattern.mirrored());
+
+        if rule.pairs.is_empty() {
+            return BoardKey { key: min_image };
+        }
+
+        let symmetrized_image = board.pattern.symmetrized(&rule.pairs);
+        let min_image = Self::min(min_image, symmetrized_image);
+
+        let symmetrized_mirrored = symmetrized_image.mirrored();
+        let min_image = Self::min(min_image, symmetrized_mirrored);
+
+        BoardKey { key: min_image }
+    }
+
+    fn min(a: BitPattern, b: BitPattern) -> BitPattern {
+        if b < a { b } else { a }
+    }
+}
+
+// --- Constants ---
+
+/// All possible directions for moving pieces in the puzzle.
+static ALL_DIRECTIONS: &[Direction] = &[
+    Direction::Up,
+    Direction::Down,
+    Direction::Left,
+    Direction::Right,
+];
+
+// --- Functions ---
 
 /// Solves the klotski puzzle using a breadth-first search algorithm.
 pub fn solve(rule: &Rule) -> Option<Vec<State>> {
@@ -33,14 +97,6 @@ pub fn solve(rule: &Rule) -> Option<Vec<State>> {
 
     bfs::find_path(&start_state, is_goal, neighbors, try_visit)
 }
-
-/// All possible directions for moving pieces in the puzzle.
-static ALL_DIRECTIONS: &[Direction] = &[
-    Direction::Up,
-    Direction::Down,
-    Direction::Left,
-    Direction::Right,
-];
 
 /// Creates the next possible states from the current state based on the given rule.
 fn get_neighbors(rule: &Rule, current_state: &State) -> Vec<State> {
@@ -84,4 +140,109 @@ fn get_neighbors(rule: &Rule, current_state: &State) -> Vec<State> {
         }
     }
     next_states
+}
+
+// --- Tests ---
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_key() {
+        // Test BoardKey::create produces expected key
+        let rule = Rule::new(
+            &Board::new(0x3112_3112_5544_9876_9006),
+            &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
+        );
+        let actual_key = BoardKey::create(&rule, &rule.start);
+        let expected_key = BoardKey {
+            key: BitPattern::new(0x2113_2113_4455_6789_6009),
+        };
+        assert_eq!(actual_key, expected_key);
+    }
+
+    #[test]
+    fn test_move_path_display() {
+        // Test MovePath Display implementation
+        let up = Direction::Up;
+        let down = Direction::Down;
+        let path_none = MovePath::None;
+        let path_one = MovePath::One(up);
+        let path_two = MovePath::Two(up, down);
+        assert_eq!(format!("{path_none}"), "None");
+        assert_eq!(format!("{path_one}"), format!("{up}"));
+        assert_eq!(format!("{path_two}"), format!("{up} and {down}"));
+    }
+
+    #[test]
+    fn test_get_neighbors() {
+        // Test that get_neighbors does not move the same piece twice in a row
+        let rule = Rule::new(
+            &Board::new(0x2113_2113_4556_4786_900a),
+            &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
+        );
+        let state = State {
+            board: rule.start.clone(),
+            piece: Some(rule.pieces[0]),
+            path: MovePath::None,
+        };
+        let neighbors = super::get_neighbors(&rule, &state);
+        assert_eq!(
+            neighbors,
+            vec![
+                State {
+                    board: Board::new(0x2113_2113_4556_4086_970a),
+                    piece: Some(Piece::new(7)),
+                    path: MovePath::One(Direction::Down),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4086_907a),
+                    piece: Some(Piece::new(7)),
+                    path: MovePath::Two(Direction::Down, Direction::Right),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4706_908a),
+                    piece: Some(Piece::new(8)),
+                    path: MovePath::One(Direction::Down),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4706_980a),
+                    piece: Some(Piece::new(8)),
+                    path: MovePath::Two(Direction::Down, Direction::Left),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4786_090a),
+                    piece: Some(Piece::new(9)),
+                    path: MovePath::One(Direction::Right),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4786_009a),
+                    piece: Some(Piece::new(9)),
+                    path: MovePath::Two(Direction::Right, Direction::Right),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4786_90a0),
+                    piece: Some(Piece::new(0xa)),
+                    path: MovePath::One(Direction::Left),
+                },
+                State {
+                    board: Board::new(0x2113_2113_4556_4786_9a00),
+                    piece: Some(Piece::new(0xa)),
+                    path: MovePath::Two(Direction::Left, Direction::Left),
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_solve_returns_none_for_unsolvable() {
+        // Test solve returns None for unsolvable puzzle
+        let rule = Rule::new(
+            &Board::new(0x2112_2112_3344_5678_5008),
+            &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
+        );
+        let result = super::solve(&rule);
+        assert_eq!(result, None);
+    }
 }

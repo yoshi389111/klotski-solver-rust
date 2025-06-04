@@ -15,15 +15,17 @@ pub struct BitPattern {
     array: [u16; SIZE],
 }
 
+// --- Implementation ---
+
 impl BitPattern {
     /// Creates a new `BitPattern` from a 128-bit unsigned integer.
-    pub const fn new(input: u128) -> Self {
+    pub const fn new(image: u128) -> Self {
         Self::from_u16_array([
-            (input >> 64) as u16,
-            (input >> 48) as u16,
-            (input >> 32) as u16,
-            (input >> 16) as u16,
-            input as u16,
+            (image >> 64) as u16,
+            (image >> 48) as u16,
+            (image >> 32) as u16,
+            (image >> 16) as u16,
+            image as u16,
         ])
     }
 
@@ -139,6 +141,8 @@ impl BitPattern {
     }
 }
 
+// --- Operator Implementations ---
+
 impl std::ops::BitAnd for BitPattern {
     type Output = Self;
 
@@ -200,6 +204,8 @@ impl std::fmt::Display for BitPattern {
     }
 }
 
+// --- Tests ---
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -220,37 +226,41 @@ mod tests {
     }
 
     #[test]
-    fn test_bitpattern_from_u16_array() {
+    fn from_u16_array_should_create_correct_pattern() {
         let bit_pattern = BitPattern::from_u16_array([0x2113, 0x2113, 0x4455, 0x6789, 0x6009]);
         let expected_array = [0x2113, 0x2113, 0x4455, 0x6789, 0x6009];
         assert_eq_hex!(&bit_pattern.array, &expected_array);
     }
 
     #[test]
-    fn test_bitpattern_from_u128() {
+    fn from_u128_should_create_correct_pattern() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let expected_array = [0x2113, 0x2113, 0x4455, 0x6789, 0x6009];
         assert_eq_hex!(&bit_pattern.array, &expected_array);
     }
 
     #[test]
-    fn test_bitpattern_get_u128() {
+    fn get_u128_should_return_original_value() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let expected_u128 = 0x2113_2113_4455_6789_6009u128;
         assert_eq_hex!(bit_pattern.get_u128(), expected_u128);
     }
 
     #[test]
-    fn test_bitpattern_is_empty() {
+    fn is_empty_and_is_not_empty_should_work() {
         let bit_pattern = BitPattern::new(0x00000000000000000000);
         let expected_array = [0, 0, 0, 0, 0];
         assert_eq_hex!(&bit_pattern.array, &expected_array);
         assert!(bit_pattern.is_empty());
         assert!(!bit_pattern.is_not_empty());
+
+        let non_empty = BitPattern::new(0x0001_0000_0000_0000_0000);
+        assert!(!non_empty.is_empty());
+        assert!(non_empty.is_not_empty());
     }
 
     #[test]
-    fn test_bitpattern_bitwise_operations() {
+    fn bitwise_operations_should_work() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let bit_mask = BitPattern::new(0xffff_0000_ffff_0000_ffff);
         let and_result = bit_pattern & bit_mask;
@@ -273,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bitpattern_moved() {
+    fn moved_should_shift_pattern_correctly() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
 
         assert_eq!(
@@ -295,7 +305,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bitpattern_mirrored() {
+    fn mirrored_should_reverse_each_row() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
 
         assert_eq!(
@@ -305,14 +315,14 @@ mod tests {
     }
 
     #[test]
-    fn test_mirrored_u16() {
+    fn mirrored_u16_should_reverse_nibbles() {
         assert_eq_hex!(BitPattern::mirrored_u16(0x1234), 0x4321);
         assert_eq_hex!(BitPattern::mirrored_u16(0x5678), 0x8765);
         assert_eq_hex!(BitPattern::mirrored_u16(0x9abc), 0xcba9);
     }
 
     #[test]
-    fn test_bitpattern_symmetrized() {
+    fn symmetrized_should_swap_pairs() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let pairs: Vec<(Piece, Piece)> = vec![
             (Piece::new(2), Piece::new(3)),
@@ -328,18 +338,18 @@ mod tests {
     }
 
     #[test]
-    fn test_symmetrized_u16() {
+    fn symmetrized_u16_should_swap_pairs() {
         let pairs: Vec<(Piece, Piece)> = vec![
             (Piece::new(2), Piece::new(3)),
             (Piece::new(4), Piece::new(5)),
         ];
-        // memo: swap 2 <-> 3, 4 <-> 5
+        // swap 2 <-> 3, 4 <-> 5
         let swapped_data = BitPattern::symmetrized_u16(0x1234, &pairs);
         assert_eq_hex!(swapped_data, 0x1325);
     }
 
     #[test]
-    fn test_bitpattern_mask_of() {
+    fn mask_of_should_return_piece_mask() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
 
         assert_eq!(
@@ -361,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mask_of_piece_u16() {
+    fn mask_of_piece_u16_should_return_piece_mask() {
         assert_eq_hex!(BitPattern::mask_of_piece_u16(0x1221, Piece::new(1)), 0xf00f);
         assert_eq_hex!(BitPattern::mask_of_piece_u16(0x1221, Piece::new(2)), 0x0ff0);
         assert_eq_hex!(BitPattern::mask_of_piece_u16(0x1234, Piece::new(4)), 0x000f);
@@ -370,9 +380,40 @@ mod tests {
     }
 
     #[test]
-    fn test_bitpattern_display() {
+    fn display_should_format_as_hex_string() {
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let displayed = format!("{}", bit_pattern);
         assert_eq!(displayed, "[2113_2113_4455_6789_6009]");
+    }
+
+    #[test]
+    fn moved_should_return_empty_when_all_zero() {
+        let bit_pattern = BitPattern::new(0x0000_0000_0000_0000_0000);
+        assert_eq!(
+            bit_pattern.moved(Direction::Up),
+            BitPattern::new(0x0000_0000_0000_0000_0000)
+        );
+        assert_eq!(
+            bit_pattern.moved(Direction::Down),
+            BitPattern::new(0x0000_0000_0000_0000_0000)
+        );
+        assert_eq!(
+            bit_pattern.moved(Direction::Left),
+            BitPattern::new(0x0000_0000_0000_0000_0000)
+        );
+        assert_eq!(
+            bit_pattern.moved(Direction::Right),
+            BitPattern::new(0x0000_0000_0000_0000_0000)
+        );
+    }
+
+    #[test]
+    fn mask_of_should_return_empty_for_nonexistent_piece() {
+        let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
+        // Piece 0 does not exist in this pattern
+        assert_eq!(
+            bit_pattern.mask_of(Piece::new(0xa)),
+            BitPattern::new(0x0000_0000_0000_0000_0000)
+        );
     }
 }

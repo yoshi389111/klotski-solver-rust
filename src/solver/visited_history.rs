@@ -52,14 +52,14 @@ impl<T: Eq + Hash> VisitedHistory<T> {
         }
     }
 
-    fn advance_generation(&mut self) {
-        self.pre_previous = std::mem::take(&mut self.previous);
-        self.previous = std::mem::take(&mut self.current);
-    }
-
     fn contains(&self, node: &T) -> bool {
         self.current.contains(node)
             || self.previous.contains(node)
             || self.pre_previous.contains(node)
+    }
+
+    fn advance_generation(&mut self) {
+        self.pre_previous = std::mem::take(&mut self.previous);
+        self.previous = std::mem::take(&mut self.current);
     }
 }

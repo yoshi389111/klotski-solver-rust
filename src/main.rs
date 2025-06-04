@@ -1,5 +1,6 @@
 use clap::Parser;
 
+/// Command-line arguments for the Klotski solver.
 #[derive(Debug, Parser)]
 #[command(version, about)]
 struct Args {

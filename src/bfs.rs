@@ -1,6 +1,37 @@
-mod path_finder;
+use std::collections::VecDeque;
+use std::rc::Rc;
 
-use path_finder::PathFinder;
+// --- Traits ---
+
+pub trait TracePath<T> {
+    fn trace_path(&self) -> Vec<T>;
+}
+
+// --- Structs ---
+
+#[derive(Debug)]
+struct Node<T> {
+    state: T,
+    parent: Option<Rc<Node<T>>>,
+}
+
+// --- Trait Implementations ---
+
+impl<T: Clone> TracePath<T> for Rc<Node<T>> {
+    /// Returns the path from the start state to the goal state.
+    fn trace_path(&self) -> Vec<T> {
+        let mut path = Vec::new();
+        let mut node_opt = Some(self.clone());
+        while let Some(node) = node_opt {
+            path.push(node.state.clone());
+            node_opt = node.parent.clone();
+        }
+        path.reverse();
+        path
+    }
+}
+
+// --- Functions ---
 
 /// Finds a path from the start state to a goal state using a breadth-first search algorithm.
 ///
@@ -14,7 +45,7 @@ pub fn find_path<T, FGoal, FNext, FVisit>(
     start_state: &T,
     is_goal: FGoal,
     neighbors: FNext,
-    try_visit: FVisit,
+    mut try_visit: FVisit,
 ) -> Option<Vec<T>>
 where
     T: Clone,
@@ -22,9 +53,39 @@ where
     FNext: Fn(&T) -> Vec<T>,
     FVisit: FnMut(&T, usize) -> bool,
 {
-    let mut finder = PathFinder::new(is_goal, neighbors, try_visit);
-    finder.find(start_state)
+    let mut queue = VecDeque::new();
+
+    const START_DEPTH: usize = 0;
+    if (try_visit)(start_state, START_DEPTH) {
+        let start_node = Rc::new(Node {
+            state: start_state.clone(),
+            parent: None,
+        });
+        if (is_goal)(start_state) {
+            return Some(start_node.trace_path()); // Found immediately.
+        }
+        queue.push_back((start_node, START_DEPTH));
+    }
+
+    while let Some((current_node, current_depth)) = queue.pop_front() {
+        let next_depth = current_depth + 1;
+        for next_state in (neighbors)(&current_node.state) {
+            if (try_visit)(&next_state, next_depth) {
+                let next_node = Rc::new(Node {
+                    state: next_state.clone(),
+                    parent: Some(current_node.clone()),
+                });
+                if (is_goal)(&next_state) {
+                    return Some(next_node.trace_path()); // Found.
+                }
+                queue.push_back((next_node, next_depth));
+            }
+        }
+    }
+    None // Not Found.
 }
+
+// --- Tests ---
 
 #[cfg(test)]
 mod tests {
@@ -33,10 +94,10 @@ mod tests {
 
     #[test]
     fn test_find_path_linear() {
+        // Linear path: 0 -> 1 -> 2 -> 3 -> 4
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
-        // 0 -> 1 -> 2 -> 3 -> 4
         let neighbors = |&x: &i32| if x < goal { vec![x + 1] } else { vec![] };
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
@@ -47,11 +108,10 @@ mod tests {
 
     #[test]
     fn test_find_path_branch() {
+        // Branching path: 0 -> 1 -> 3 or 0 -> 2 -> 4
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
-        // 0 -> 1 -> 3 or
-        // 0 -> 2 -> 4
         let neighbors = |&x: &i32| match x {
             0 => vec![1, 2],
             1 => vec![3],
@@ -67,11 +127,10 @@ mod tests {
 
     #[test]
     fn test_find_path_shortest() {
+        // Shortest path: 0 -> 1 -> 4 (not 0 -> 2 -> 3 -> 4)
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
-        // 0 -> 1 -> 4 or
-        // 0 -> 2 -> 3 -> 4
         let neighbors = |&x: &i32| match x {
             0 => vec![1, 2],
             1 => vec![4],
@@ -86,6 +145,7 @@ mod tests {
 
     #[test]
     fn test_find_path_revisit() {
+        // Path with possible revisits: 0 -> 1 -> 2 -> 3 -> 4 -> 5
         let start = 0;
         let goal = 5;
         let is_goal = |&x: &i32| x == goal;
@@ -99,10 +159,10 @@ mod tests {
 
     #[test]
     fn test_find_path_not_found() {
+        // No path to goal
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
-        // 0 -> 1 -> 2
         let neighbors = |&x: &i32| match x {
             0 => vec![1],
             1 => vec![2],
@@ -117,6 +177,7 @@ mod tests {
 
     #[test]
     fn test_find_path_alread_goaled() {
+        // Start is already goal
         let start = 0;
         let goal = 0;
         let is_goal = |&x: &i32| x == goal;
