@@ -14,8 +14,6 @@ pub struct BitPattern {
 
 const BIT_PATTERN_MASK: u128 = 0xffff_ffff_ffff_ffff_ffff;
 
-// --- Implementation ---
-
 impl BitPattern {
     /// Creates a new `BitPattern` from a 128-bit unsigned integer.
     pub const fn new(image: u128) -> Self {
@@ -103,8 +101,6 @@ impl BitPattern {
     }
 }
 
-// --- Operator Implementations ---
-
 impl std::ops::BitAnd for BitPattern {
     type Output = Self;
 
@@ -152,8 +148,6 @@ impl std::fmt::Display for BitPattern {
         )
     }
 }
-
-// --- Tests ---
 
 #[cfg(test)]
 mod tests {

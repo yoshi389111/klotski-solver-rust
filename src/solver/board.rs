@@ -7,14 +7,10 @@ pub struct Board {
     pub pattern: BitPattern,
 }
 
-// --- Constants ---
-
 static EDGE_TOP: BitPattern = BitPattern::new(0xffff_0000_0000_0000_0000);
 static EDGE_BOTTOM: BitPattern = BitPattern::new(0x0000_0000_0000_0000_ffff);
 static EDGE_LEFT: BitPattern = BitPattern::new(0xf000_f000_f000_f000_f000);
 static EDGE_RIGHT: BitPattern = BitPattern::new(0x000f_000f_000f_000f_000f);
-
-// --- Implementation ---
 
 impl Board {
     /// Creates a new `Board` from a 128-bit integer representation.
@@ -53,8 +49,6 @@ impl Board {
         Some(next_board)
     }
 }
-
-// --- Tests ---
 
 #[cfg(test)]
 mod tests {

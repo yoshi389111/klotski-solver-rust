@@ -13,8 +13,6 @@ use piece::Piece;
 use rule::Rule;
 use visited_history::VisitedHistory;
 
-// --- Structs and Enums ---
-
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct State {
     pub board: Board,
@@ -68,8 +66,6 @@ impl BoardKey {
     }
 }
 
-// --- Constants ---
-
 /// All possible directions for moving pieces in the puzzle.
 static ALL_DIRECTIONS: &[Direction] = &[
     Direction::Up,
@@ -77,8 +73,6 @@ static ALL_DIRECTIONS: &[Direction] = &[
     Direction::Left,
     Direction::Right,
 ];
-
-// --- Functions ---
 
 /// Solves the klotski puzzle using a breadth-first search algorithm.
 pub fn solve(rule: &Rule) -> Option<Vec<State>> {
@@ -141,8 +135,6 @@ fn get_neighbors(rule: &Rule, current_state: &State) -> Vec<State> {
     }
     next_states
 }
-
-// --- Tests ---
 
 #[cfg(test)]
 mod tests {

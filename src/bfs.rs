@@ -1,21 +1,24 @@
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-// --- Traits ---
-
-pub trait TracePath<T> {
-    fn trace_path(&self) -> Vec<T>;
-}
-
-// --- Structs ---
-
+/// Represents a node in the search tree, containing the state and a reference to its parent node.
 #[derive(Debug)]
 struct Node<T> {
     state: T,
     parent: Option<Rc<Node<T>>>,
 }
 
-// --- Trait Implementations ---
+impl<T> Node<T> {
+    /// Creates a new `Node` with the given state and parent.
+    fn new(state: T, parent: Option<Rc<Node<T>>>) -> Rc<Self> {
+        Rc::new(Node { state, parent })
+    }
+}
+
+/// A trait for types that can trace their path from the start state to the goal state.
+pub trait TracePath<T> {
+    fn trace_path(&self) -> Vec<T>;
+}
 
 impl<T: Clone> TracePath<T> for Rc<Node<T>> {
     /// Returns the path from the start state to the goal state.
@@ -30,8 +33,6 @@ impl<T: Clone> TracePath<T> for Rc<Node<T>> {
         path
     }
 }
-
-// --- Functions ---
 
 /// Finds a path from the start state to a goal state using a breadth-first search algorithm.
 ///
@@ -56,12 +57,9 @@ where
     let mut queue = VecDeque::new();
 
     const START_DEPTH: usize = 0;
-    if (try_visit)(start_state, START_DEPTH) {
-        let start_node = Rc::new(Node {
-            state: start_state.clone(),
-            parent: None,
-        });
-        if (is_goal)(start_state) {
+    if try_visit(start_state, START_DEPTH) {
+        let start_node = Node::new(start_state.clone(), None);
+        if is_goal(start_state) {
             return Some(start_node.trace_path()); // Found immediately.
         }
         queue.push_back((start_node, START_DEPTH));
@@ -70,12 +68,9 @@ where
     while let Some((current_node, current_depth)) = queue.pop_front() {
         let next_depth = current_depth + 1;
         for next_state in (neighbors)(&current_node.state) {
-            if (try_visit)(&next_state, next_depth) {
-                let next_node = Rc::new(Node {
-                    state: next_state.clone(),
-                    parent: Some(current_node.clone()),
-                });
-                if (is_goal)(&next_state) {
+            if try_visit(&next_state, next_depth) {
+                let next_node = Node::new(next_state.clone(), Some(current_node.clone()));
+                if is_goal(&next_state) {
                     return Some(next_node.trace_path()); // Found.
                 }
                 queue.push_back((next_node, next_depth));
@@ -84,8 +79,6 @@ where
     }
     None // Not Found.
 }
-
-// --- Tests ---
 
 #[cfg(test)]
 mod tests {

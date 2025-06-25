@@ -6,7 +6,6 @@ use solver::board::Board;
 use solver::piece::Piece;
 use solver::rule::Rule;
 
-// --- Error type ---
 #[derive(Debug)]
 pub enum KlotskiError {
     Validation(String),
@@ -28,14 +27,12 @@ impl std::fmt::Display for KlotskiError {
 
 impl std::error::Error for KlotskiError {}
 
-// --- Constants ---
 const SHAPE_UNUSED: BitPattern = BitPattern::new(0x0000_0000);
 const SHAPE_SMALL: BitPattern = BitPattern::new(0x0000_000f);
 const SHAPE_HORIZONTAL: BitPattern = BitPattern::new(0x0000_00ff);
 const SHAPE_VERTICAL: BitPattern = BitPattern::new(0x000f_000f);
 const SHAPE_LARGE: BitPattern = BitPattern::new(0x00ff_00ff);
 
-// --- Utility functions ---
 /// Parses a string representing a 20 hex digit number, allowing for underscores as separators.
 fn parse_20_hex_digits(value: &str) -> Option<BitPattern> {
     let value = value.trim_start_matches("0x").replace('_', "");
@@ -76,7 +73,6 @@ fn count_empty_spaces(bit_pattern: &BitPattern) -> usize {
     count
 }
 
-// --- Public functions ---
 /// Runs the solver with the given rule and writes the solution steps.
 pub fn run<W: std::io::Write>(mut output: W, rule: &Rule) -> std::io::Result<()> {
     let Some(path) = solver::solve(rule) else {

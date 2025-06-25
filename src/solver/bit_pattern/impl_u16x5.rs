@@ -15,8 +15,6 @@ pub struct BitPattern {
     array: [u16; SIZE],
 }
 
-// --- Implementation ---
-
 impl BitPattern {
     /// Creates a new `BitPattern` from a 128-bit unsigned integer.
     pub const fn new(image: u128) -> Self {
@@ -141,8 +139,6 @@ impl BitPattern {
     }
 }
 
-// --- Operator Implementations ---
-
 impl std::ops::BitAnd for BitPattern {
     type Output = Self;
 
@@ -203,8 +199,6 @@ impl std::fmt::Display for BitPattern {
         Ok(())
     }
 }
-
-// --- Tests ---
 
 #[cfg(test)]
 mod tests {
