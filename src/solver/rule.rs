@@ -195,7 +195,7 @@ mod tests {
         // Assert
         assert!(result.is_err());
 
-        // Arrenge: Invalid goal
+        // Arrange: Invalid goal
         let bad_goal = "0x0000_0000_0000_0000_0001";
         // Act
         let result = Rule::parse(start, bad_goal);
