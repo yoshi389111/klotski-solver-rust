@@ -20,6 +20,7 @@ pub enum RuleError {
     FirstPieceMissingInStartBoard,
     InvalidPieceShape,
     InvalidGoalMaskHexLength,
+    GoalmaskInvalidError,
     GoalMaskShapeError,
 }
 
@@ -57,6 +58,10 @@ impl Rule {
 
         let goal_mask =
             parse_20_hex_digits(goal_mask).ok_or(RuleError::InvalidGoalMaskHexLength)?;
+
+        if count_empty_spaces(&goal_mask) != 16 {
+            return Err(RuleError::GoalmaskInvalidError);
+        }
 
         if piece_shape(&goal_mask, 0xf) != SHAPE_LARGE {
             return Err(RuleError::GoalMaskShapeError);

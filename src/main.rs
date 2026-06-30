@@ -49,6 +49,7 @@ fn convert_error_to_string(e: RuleError) -> &'static str {
         RuleError::FirstPieceMissingInStartBoard => "START_IMAGE must have the #1 large piece.",
         RuleError::InvalidPieceShape => "START_IMAGE contains an invalid piece shape.",
         RuleError::InvalidGoalMaskHexLength => "GOAL_MASK must fit in 20 hex digits.",
+        RuleError::GoalmaskInvalidError => "GOAL_MASK is an invalid mask for the goal positions.",
         RuleError::GoalMaskShapeError => "GOAL_MASK has an invalid shape.",
     }
 }
