@@ -42,26 +42,14 @@ fn run(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn convert_error_to_string(e: RuleError) -> String {
+fn convert_error_to_string(e: RuleError) -> &'static str {
     match e {
-        RuleError::InvalidStartBoardHexLength => {
-            "START_IMAGE must be a 20 hex digit number.".to_string()
-        }
-        RuleError::StartBoardInvalidEmptySpaceCount => {
-            "START_IMAGE must have only two empty spaces.".to_string()
-        }
-        RuleError::FirstPieceMissingInStartBoard => {
-            "START_IMAGE must have the #1 large piece.".to_string()
-        }
-        RuleError::InvalidPieceShape => {
-            "START_IMAGE contains a piece that is not of a legal shape.".to_string()
-        }
-        RuleError::InvalidGoalMaskHexLength => {
-            "GOAL_MASK must be a 20 hex digit number.".to_string()
-        }
-        RuleError::GoalMaskSizeMismatch => {
-            "GOAL_MASK must be a mask that indicates the goal position.".to_string()
-        }
-        RuleError::GoalMaskShapeError => "GOAL_MASK shape is incorrect.".to_string(),
+        RuleError::InvalidStartBoardHexLength => "START_IMAGE must fit in 20 hex digits.",
+        RuleError::StartBoardInvalidEmptyCount => "START_IMAGE must have only two empty spaces.",
+        RuleError::FirstPieceMissingInStartBoard => "START_IMAGE must have the #1 large piece.",
+        RuleError::InvalidPieceShape => "START_IMAGE contains an invalid piece shape.",
+        RuleError::InvalidGoalMaskHexLength => "GOAL_MASK must fit in 20 hex digits.",
+        RuleError::GoalmaskInvalidError => "GOAL_MASK is an invalid mask for the goal positions.",
+        RuleError::GoalMaskShapeError => "GOAL_MASK has an invalid shape.",
     }
 }
