@@ -22,7 +22,10 @@ mod tests {
 
     #[test]
     fn test_piece() {
+        // Arrange & Act
         let piece = Piece::new(5);
+
+        // Assert
         assert_eq!(piece.id, 5);
         assert_eq!(format!("{}", piece), "5");
 

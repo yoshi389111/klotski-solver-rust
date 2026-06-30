@@ -36,6 +36,7 @@ mod tests {
 
     #[test]
     fn test_direction_reversed() {
+        // Act & Assert
         assert_eq!(Direction::Up.reversed(), Direction::Down);
         assert_eq!(Direction::Down.reversed(), Direction::Up);
         assert_eq!(Direction::Left.reversed(), Direction::Right);
