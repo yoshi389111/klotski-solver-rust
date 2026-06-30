@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn rule_new_should_initialize_fields() {
-        // Arrenge & Act
+        // Arrange & Act
         let rule = Rule::new(
             &Board::new(0x2113_2113_4556_4786_900a),
             &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
