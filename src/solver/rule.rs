@@ -12,26 +12,36 @@ pub struct Rule {
     pub goal_mask: BitPattern,
 }
 
+/// Defines various errors that may occur during rule parsing.
 #[derive(Debug)]
 pub enum RuleError {
     InvalidStartBoardHexLength,
-    StartBoardInvalidEmptySpaceCount,
+    StartBoardInvalidEmptyCount,
     FirstPieceMissingInStartBoard,
     InvalidPieceShape,
     InvalidGoalMaskHexLength,
-    GoalMaskSizeMismatch,
     GoalMaskShapeError,
 }
 
+/// The shape representing a space without a piece.
+const SHAPE_UNUSED: BitPattern = BitPattern::new(0x0000_0000);
+/// The shape of a small piece, which occupies a single cell in the puzzle.
+const SHAPE_SMALL: BitPattern = BitPattern::new(0x0000_000f);
+/// The shape of a horizontally elongated piece, which occupies two columns in the puzzle.
+const SHAPE_HORIZONTAL: BitPattern = BitPattern::new(0x0000_00ff);
+/// The shape of a vertically elongated piece, which occupies two rows in the puzzle.
+const SHAPE_VERTICAL: BitPattern = BitPattern::new(0x000f_000f);
+/// The shape of the large piece to be moved to the goal.
 const SHAPE_LARGE: BitPattern = BitPattern::new(0x00ff_00ff);
 
 impl Rule {
+    /// Parses the starting board and goal mask from hexadecimal strings, validating their formats and contents.
     pub fn parse(start_image: &str, goal_mask: &str) -> Result<Self, RuleError> {
         let start_image =
             parse_20_hex_digits(start_image).ok_or(RuleError::InvalidStartBoardHexLength)?;
 
         if count_empty_spaces(&start_image) != 2 {
-            return Err(RuleError::StartBoardInvalidEmptySpaceCount);
+            return Err(RuleError::StartBoardInvalidEmptyCount);
         }
 
         if piece_shape(&start_image, 1) != SHAPE_LARGE {
@@ -47,10 +57,6 @@ impl Rule {
 
         let goal_mask =
             parse_20_hex_digits(goal_mask).ok_or(RuleError::InvalidGoalMaskHexLength)?;
-
-        if count_empty_spaces(&goal_mask) != 16 {
-            return Err(RuleError::GoalMaskSizeMismatch);
-        }
 
         if piece_shape(&goal_mask, 0xf) != SHAPE_LARGE {
             return Err(RuleError::GoalMaskShapeError);
@@ -140,18 +146,13 @@ fn parse_20_hex_digits(value: &str) -> Option<BitPattern> {
 
 /// Returns the shape of the specified piece in the bit pattern.
 fn piece_shape(bit_pattern: &BitPattern, piece_id: u8) -> BitPattern {
-    let piece_mask: u128 = bit_pattern.mask_of(Piece::new(piece_id)).get_u128();
+    let piece_mask = bit_pattern.mask_of(Piece::new(piece_id)).get_u128();
     let piece_shape = match piece_mask {
         0 => 0,
         _ => piece_mask >> piece_mask.trailing_zeros(),
     };
     BitPattern::new(piece_shape)
 }
-
-const SHAPE_UNUSED: BitPattern = BitPattern::new(0x0000_0000);
-const SHAPE_SMALL: BitPattern = BitPattern::new(0x0000_000f);
-const SHAPE_HORIZONTAL: BitPattern = BitPattern::new(0x0000_00ff);
-const SHAPE_VERTICAL: BitPattern = BitPattern::new(0x000f_000f);
 
 /// Checks if the given shape is a valid regular piece shape.
 fn is_valid_regular_piece_shapes(shape: &BitPattern) -> bool {

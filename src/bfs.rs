@@ -1,22 +1,22 @@
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-/// Represents a node in the search tree, containing the state and a reference to its parent node.
+/// Represents a node in the search tree, containing the state and a reference to its previous node.
 #[derive(Debug)]
 struct Node<T> {
     state: T,
-    parent: Option<Rc<Node<T>>>,
+    previous: Option<Rc<Node<T>>>,
 }
 
 impl<T> Node<T> {
-    /// Creates a new `Node` with the given state and parent.
-    fn new(state: T, parent: Option<Rc<Node<T>>>) -> Rc<Self> {
-        Rc::new(Node { state, parent })
+    /// Creates a new `Node` with the given state and previous node.
+    fn new(state: T, previous: Option<Rc<Node<T>>>) -> Rc<Self> {
+        Rc::new(Node { state, previous })
     }
 }
 
 /// A trait for types that can trace their path from the start state to the goal state.
-pub trait TracePath<T> {
+trait TracePath<T> {
     fn trace_path(&self) -> Vec<T>;
 }
 
@@ -24,10 +24,10 @@ impl<T: Clone> TracePath<T> for Rc<Node<T>> {
     /// Returns the path from the start state to the goal state.
     fn trace_path(&self) -> Vec<T> {
         let mut path = Vec::new();
-        let mut node_opt = Some(self.clone());
-        while let Some(node) = node_opt {
+        let mut current_node = Some(self.clone());
+        while let Some(node) = current_node {
             path.push(node.state.clone());
-            node_opt = node.parent.clone();
+            current_node = node.previous.clone();
         }
         path.reverse();
         path
@@ -60,7 +60,8 @@ where
     if try_visit(start_state, START_DEPTH) {
         let start_node = Node::new(start_state.clone(), None);
         if is_goal(start_state) {
-            return Some(start_node.trace_path()); // Found immediately.
+            // Found immediately.
+            return Some(start_node.trace_path());
         }
         queue.push_back((start_node, START_DEPTH));
     }
@@ -68,13 +69,16 @@ where
     while let Some((current_node, current_depth)) = queue.pop_front() {
         let next_depth = current_depth + 1;
         for next_state in (neighbors)(&current_node.state) {
-            if try_visit(&next_state, next_depth) {
-                let next_node = Node::new(next_state.clone(), Some(current_node.clone()));
-                if is_goal(&next_state) {
-                    return Some(next_node.trace_path()); // Found.
-                }
-                queue.push_back((next_node, next_depth));
+            if !try_visit(&next_state, next_depth) {
+                // Already visited.
+                continue;
             }
+            let next_node = Node::new(next_state.clone(), Some(current_node.clone()));
+            if is_goal(&next_state) {
+                // Found the goal state.
+                return Some(next_node.trace_path());
+            }
+            queue.push_back((next_node, next_depth));
         }
     }
     None // Not Found.

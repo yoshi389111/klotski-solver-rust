@@ -10,7 +10,6 @@ mod visited_history;
 
 pub use bit_pattern::BitPattern;
 pub use board::Board;
-use board::BoardKey;
 pub use direction::Direction;
 pub use move_path::MovePath;
 pub use piece::Piece;
