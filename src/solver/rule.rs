@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn test_parse_valid_and_invalid() {
-        // Arrenge
+        // Arrange
         let start = "0x2113_2113_4556_4786_900a";
         let goal = "0x0000_0000_0000_0ff0_0ff0";
         // Act
