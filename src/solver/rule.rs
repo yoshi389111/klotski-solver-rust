@@ -188,7 +188,7 @@ mod tests {
         // Assert
         assert!(result.is_ok());
 
-        // Arrenge: Invalid start
+        // Arrange: Invalid start
         let bad_start = "0x0000_0000_0000_0000_0000";
         // Act
         let result = Rule::parse(bad_start, goal);
