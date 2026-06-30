@@ -1,6 +1,7 @@
-use super::bit_pattern::BitPattern;
-use super::direction::Direction;
-use super::piece::Piece;
+use super::BitPattern;
+use super::Direction;
+use super::Piece;
+use super::Rule;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
@@ -50,34 +51,91 @@ impl Board {
     }
 }
 
+/// Represents a unique key for a board state, which is used to identify and compare different board configurations.
+#[derive(PartialEq, Eq, Hash, Debug)]
+pub struct BoardKey {
+    key: BitPattern,
+}
+
+impl BoardKey {
+    /// Creates a new `BoardKey` based on the provided rule and board.
+    pub fn create(rule: &Rule, board: &Board) -> BoardKey {
+        let min_image = Self::min(board.pattern, board.pattern.mirrored());
+
+        if rule.pairs.is_empty() {
+            return BoardKey { key: min_image };
+        }
+
+        let symmetrized_image = board.pattern.symmetrized(&rule.pairs);
+        let min_image = Self::min(min_image, symmetrized_image);
+
+        let symmetrized_mirrored = symmetrized_image.mirrored();
+        let min_image = Self::min(min_image, symmetrized_mirrored);
+
+        BoardKey { key: min_image }
+    }
+
+    fn min(a: BitPattern, b: BitPattern) -> BitPattern {
+        if b < a { b } else { a }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_board() {
+        // Arrange & Act
         let board = Board::new(0x2113_2113_4455_6789_6009);
+        // Assert
         let expected_image = BitPattern::new(0x2113_2113_4455_6789_6009);
         assert_eq!(board.pattern, expected_image);
     }
 
     #[test]
     fn test_move_piece() {
+        // Arrange#1-#3
         let board = Board::new(0x2113_2113_4455_6789_6009);
 
+        // Act#1
         let moved_result = board.move_piece(Piece::new(8), Direction::Down);
+        // Assert#1
         let expected_board = Board::new(0x2113_2113_4455_6709_6089);
         assert_eq!(moved_result, Some(expected_board));
 
+        // Act#2
         let case_of_on_edge = board.move_piece(Piece::new(9), Direction::Right);
+        // Assert#2
         assert_eq!(case_of_on_edge, None);
 
+        // Act#3
         let case_of_overlap = board.move_piece(Piece::new(9), Direction::Left);
+        // Assert#3
         assert_eq!(case_of_overlap, None);
 
+        // Arrange#4
         let board2 = Board::new(0x2113_2113_4455_6709_6809);
+        // Act#4
         let moved_result2 = board2.move_piece(Piece::new(9), Direction::Left);
+        // Assert#4
         let expected_board2 = Board::new(0x2113_2113_4455_6790_6890);
         assert_eq!(moved_result2, Some(expected_board2));
+    }
+
+    #[test]
+    fn test_create_key() {
+        // Arrange: Test BoardKey::create produces expected key
+        let rule = Rule::new(
+            &Board::new(0x3112_3112_5544_9876_9006),
+            &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
+        );
+        // Act
+        let actual_key = BoardKey::create(&rule, &rule.start);
+        // Assert
+        let expected_key = BoardKey {
+            key: BitPattern::new(0x2113_2113_4455_6789_6009),
+        };
+        assert_eq!(actual_key, expected_key);
     }
 }

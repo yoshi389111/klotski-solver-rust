@@ -87,7 +87,7 @@ mod tests {
 
     #[test]
     fn test_find_path_linear() {
-        // Linear path: 0 -> 1 -> 2 -> 3 -> 4
+        // Arrange: Linear path: 0 -> 1 -> 2 -> 3 -> 4
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
@@ -95,13 +95,15 @@ mod tests {
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
 
+        // Act
         let path = find_path(&start, is_goal, neighbors, try_visit);
+        // Assert
         assert_eq!(path, Some(vec![0, 1, 2, 3, 4]));
     }
 
     #[test]
     fn test_find_path_branch() {
-        // Branching path: 0 -> 1 -> 3 or 0 -> 2 -> 4
+        // Arrange: Branching path: 0 -> 1 -> 3 or 0 -> 2 -> 4
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
@@ -114,13 +116,15 @@ mod tests {
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
 
+        // Act
         let path = find_path(&start, is_goal, neighbors, try_visit);
+        // Assert
         assert_eq!(path, Some(vec![0, 2, 4]));
     }
 
     #[test]
     fn test_find_path_shortest() {
-        // Shortest path: 0 -> 1 -> 4 (not 0 -> 2 -> 3 -> 4)
+        // Arrange: Shortest path: 0 -> 1 -> 4 (not 0 -> 2 -> 3 -> 4)
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
@@ -132,13 +136,15 @@ mod tests {
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
 
+        // Act
         let path = find_path(&start, is_goal, neighbors, try_visit);
+        // Assert
         assert_eq!(path, Some(vec![0, 1, 4]));
     }
 
     #[test]
     fn test_find_path_revisit() {
-        // Path with possible revisits: 0 -> 1 -> 2 -> 3 -> 4 -> 5
+        // Arrange: Path with possible revisits: 0 -> 1 -> 2 -> 3 -> 4 -> 5
         let start = 0;
         let goal = 5;
         let is_goal = |&x: &i32| x == goal;
@@ -146,13 +152,15 @@ mod tests {
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
 
+        // Act
         let path = find_path(&start, is_goal, neighbors, try_visit);
+        // Assert
         assert_eq!(path, Some(vec![0, 1, 2, 3, 4, 5]));
     }
 
     #[test]
     fn test_find_path_not_found() {
-        // No path to goal
+        // Arrange: No path to goal
         let start = 0;
         let goal = 4;
         let is_goal = |&x: &i32| x == goal;
@@ -164,13 +172,15 @@ mod tests {
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
 
+        // Act
         let path = find_path(&start, is_goal, neighbors, try_visit);
+        // Assert
         assert_eq!(path, None);
     }
 
     #[test]
     fn test_find_path_alread_goaled() {
-        // Start is already goal
+        // Arrange: Start is already goal
         let start = 0;
         let goal = 0;
         let is_goal = |&x: &i32| x == goal;
@@ -178,7 +188,9 @@ mod tests {
         let mut visited = HashSet::new();
         let try_visit = |x: &i32, _depth: usize| visited.insert(*x);
 
+        // Act
         let path = find_path(&start, is_goal, neighbors, try_visit);
+        // Assert
         assert_eq!(path, Some(vec![0]));
     }
 }

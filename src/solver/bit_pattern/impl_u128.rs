@@ -1,5 +1,5 @@
-use super::super::direction::Direction;
-use super::super::piece::Piece;
+use super::super::Direction;
+use super::super::Piece;
 
 /// A bit pattern representing the state of a board in a puzzle game.
 ///
@@ -170,25 +170,33 @@ mod tests {
 
     #[test]
     fn from_u128_should_create_correct_pattern() {
+        // Arrange & Act
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
+        // Assert
         assert_eq_hex!(&bit_pattern.pattern, &0x2113_2113_4455_6789_6009u128);
     }
 
     #[test]
     fn get_u128_should_return_original_value() {
+        // Arrange & Act
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
+        // Assert
         let expected_u128 = 0x2113_2113_4455_6789_6009u128;
         assert_eq_hex!(bit_pattern.get_u128(), expected_u128);
     }
 
     #[test]
     fn is_empty_and_is_not_empty_should_work() {
+        // Arrange & Act
         let bit_pattern = BitPattern::new(0x0000_0000_0000_0000_0000);
+        // Assert
         assert_eq_hex!(&bit_pattern.pattern, &0x0000_0000_0000_0000_0000u128);
         assert!(bit_pattern.is_empty());
         assert!(!bit_pattern.is_not_empty());
 
+        // Arrange & Act
         let non_empty = BitPattern::new(0x0001_0000_0000_0000_0000);
+        // Assert
         assert_eq_hex!(&non_empty.pattern, &0x0001_0000_0000_0000_0000u128);
         assert!(!non_empty.is_empty());
         assert!(non_empty.is_not_empty());
@@ -196,25 +204,37 @@ mod tests {
 
     #[test]
     fn bitwise_operations_should_work() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let bit_mask = BitPattern::new(0xffff_0000_ffff_0000_ffff);
+
+        // Act
         let and_result = bit_pattern & bit_mask;
+        // Assert
         assert_eq_hex!(&and_result.pattern, &0x2113_0000_4455_0000_6009u128);
 
+        // Act
         let or_result = bit_pattern | bit_mask;
+        // Assert
         assert_eq_hex!(&or_result.pattern, &0xffff_2113_ffff_6789_ffffu128);
 
+        // Act
         let xor_result = bit_pattern ^ bit_mask;
+        // Assert
         assert_eq_hex!(&xor_result.pattern, &0xdeec_2113_bbaa_6789_9ff6u128);
 
+        // Act
         let not_result = !bit_pattern;
+        // Assert
         assert_eq_hex!(&not_result.pattern, &0xdeec_deec_bbaa_9876_9ff6u128);
     }
 
     #[test]
     fn moved_should_shift_pattern_correctly() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
 
+        // Act & Assert
         assert_eq!(
             bit_pattern.moved(Direction::Up),
             BitPattern::new(0x2113_4455_6789_6009_0000)
@@ -235,8 +255,10 @@ mod tests {
 
     #[test]
     fn mirrored_should_reverse_each_row() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
 
+        // Act & Assert
         assert_eq!(
             bit_pattern.mirrored(),
             BitPattern::new(0x3112_3112_5544_9876_9006)
@@ -245,6 +267,7 @@ mod tests {
 
     #[test]
     fn symmetrized_should_swap_pairs() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
         let pairs: Vec<(Piece, Piece)> = vec![
             (Piece::new(2), Piece::new(3)),
@@ -253,16 +276,19 @@ mod tests {
             (Piece::new(7), Piece::new(8)),
         ];
 
+        // Act
         let swapped_bitpattern = bit_pattern.symmetrized(&pairs);
+        // Assert
         let expected_bitpattern = BitPattern::new(0x3112_3112_5544_9876_9006);
-
         assert_eq!(swapped_bitpattern, expected_bitpattern);
     }
 
     #[test]
     fn mask_of_should_return_piece_mask() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
 
+        // Act & Assert
         assert_eq!(
             bit_pattern.mask_of(Piece::new(1)),
             BitPattern::new(0x0ff0_0ff0_0000_0000_0000)
@@ -283,14 +309,19 @@ mod tests {
 
     #[test]
     fn display_should_format_as_hex_string() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
+        // Act
         let displayed = format!("{}", bit_pattern);
+        // Assert
         assert_eq!(displayed, "[2113_2113_4455_6789_6009]");
     }
 
     #[test]
     fn moved_should_return_empty_when_all_zero() {
+        // Arrange
         let bit_pattern = BitPattern::new(0x0000_0000_0000_0000_0000);
+        // Act & Assert
         assert_eq!(
             bit_pattern.moved(Direction::Up),
             BitPattern::new(0x0000_0000_0000_0000_0000)
@@ -311,8 +342,9 @@ mod tests {
 
     #[test]
     fn mask_of_should_return_empty_for_nonexistent_piece() {
+        // Arrange: Piece 0 does not exist in this pattern
         let bit_pattern = BitPattern::new(0x2113_2113_4455_6789_6009);
-        // Piece 0 does not exist in this pattern
+        // Act & Assert
         assert_eq!(
             bit_pattern.mask_of(Piece::new(0xa)),
             BitPattern::new(0x0000_0000_0000_0000_0000)
