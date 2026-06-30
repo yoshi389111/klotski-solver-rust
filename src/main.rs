@@ -45,16 +45,16 @@ fn run(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
 fn convert_error_to_string(e: RuleError) -> String {
     match e {
         RuleError::InvalidStartBoardHexLength => {
-            "START_BOARD must be a 20 hex digit number.".to_string()
+            "START_IMAGE must be a 20 hex digit number.".to_string()
         }
         RuleError::StartBoardInvalidEmptySpaceCount => {
-            "START_BOARD must have only two empty spaces.".to_string()
+            "START_IMAGE must have only two empty spaces.".to_string()
         }
         RuleError::FirstPieceMissingInStartBoard => {
-            "START_BOARD must have the #1 large piece.".to_string()
+            "START_IMAGE must have the #1 large piece.".to_string()
         }
         RuleError::InvalidPieceShape => {
-            "START_BOARD contains a piece that is not of a legal shape.".to_string()
+            "START_IMAGE contains a piece that is not of a legal shape.".to_string()
         }
         RuleError::InvalidGoalMaskHexLength => {
             "GOAL_MASK must be a 20 hex digit number.".to_string()
