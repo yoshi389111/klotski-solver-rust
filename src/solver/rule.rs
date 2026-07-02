@@ -1,38 +1,47 @@
-use super::BitPattern;
-use super::Board;
-use super::Piece;
+use super::{BitPattern, Board, Piece};
 use std::collections::HashMap;
 
 /// Rule struct holds the puzzle's initial state, piece list, symmetry pairs, and goal mask.
 #[derive(Debug)]
 pub struct Rule {
+    /// The starting board state of the puzzle.
     pub start: Board,
+    /// List of pieces present in the starting board.
     pub pieces: Vec<Piece>,
+    /// Pairs of pieces that are symmetric with respect to the start board.
     pub pairs: Vec<(Piece, Piece)>,
+    /// The goal mask that defines the target positions for the large piece.
     pub goal_mask: BitPattern,
 }
 
 /// Defines various errors that may occur during rule parsing.
 #[derive(Debug)]
 pub enum RuleError {
+    /// The starting board's hexadecimal representation is not 20 digits long.
     InvalidStartBoardHexLength,
-    StartBoardInvalidEmptyCount,
-    FirstPieceMissingInStartBoard,
+    /// The starting board does not have exactly 2 empty spaces.
+    InvalidStartBoardEmptyCount,
+    /// The starting board is missing the large piece.
+    MissingLargePiece,
+    /// One or more pieces have an invalid shape.
     InvalidPieceShape,
+    /// The goal mask's hexadecimal representation is not 20 digits long.
     InvalidGoalMaskHexLength,
-    GoalmaskInvalidError,
-    GoalMaskShapeError,
+    /// The goal mask does not have exactly 16 empty spaces.
+    InvalidGoalMaskEmptyCount,
+    /// The goal mask does not contain the expected large piece (2x2) shape.
+    InvalidGoalMaskShape,
 }
 
 /// The shape representing a space without a piece.
 const SHAPE_UNUSED: BitPattern = BitPattern::new(0x0000_0000);
-/// The shape of a small piece, which occupies a single cell in the puzzle.
+/// The shape of a small piece (1x1), which occupies a single cell in the puzzle.
 const SHAPE_SMALL: BitPattern = BitPattern::new(0x0000_000f);
-/// The shape of a horizontally elongated piece, which occupies two columns in the puzzle.
+/// The shape of a horizontally elongated piece (1x2), which occupies two columns in the puzzle.
 const SHAPE_HORIZONTAL: BitPattern = BitPattern::new(0x0000_00ff);
-/// The shape of a vertically elongated piece, which occupies two rows in the puzzle.
+/// The shape of a vertically elongated piece (2x1), which occupies two rows in the puzzle.
 const SHAPE_VERTICAL: BitPattern = BitPattern::new(0x000f_000f);
-/// The shape of the large piece to be moved to the goal.
+/// The shape of the large piece (2x2) to be moved to the goal.
 const SHAPE_LARGE: BitPattern = BitPattern::new(0x00ff_00ff);
 
 impl Rule {
@@ -42,11 +51,11 @@ impl Rule {
             parse_20_hex_digits(start_image).ok_or(RuleError::InvalidStartBoardHexLength)?;
 
         if count_empty_spaces(&start_image) != 2 {
-            return Err(RuleError::StartBoardInvalidEmptyCount);
+            return Err(RuleError::InvalidStartBoardEmptyCount);
         }
 
         if piece_shape(&start_image, 1) != SHAPE_LARGE {
-            return Err(RuleError::FirstPieceMissingInStartBoard);
+            return Err(RuleError::MissingLargePiece);
         }
 
         for i in 0x2u8..=0xf {
@@ -60,27 +69,28 @@ impl Rule {
             parse_20_hex_digits(goal_mask).ok_or(RuleError::InvalidGoalMaskHexLength)?;
 
         if count_empty_spaces(&goal_mask) != 16 {
-            return Err(RuleError::GoalmaskInvalidError);
+            return Err(RuleError::InvalidGoalMaskEmptyCount);
         }
 
         if piece_shape(&goal_mask, 0xf) != SHAPE_LARGE {
-            return Err(RuleError::GoalMaskShapeError);
+            return Err(RuleError::InvalidGoalMaskShape);
         }
 
-        let rule = Self::new(&Board::from_bitpattern(start_image), &goal_mask);
+        let start = Board::from_bitpattern(start_image);
+        let rule = Self::new(start, goal_mask);
 
         Ok(rule)
     }
 
     /// Create a new Rule from the start board and goal mask.
-    pub fn new(start_board: &Board, goal_mask: &BitPattern) -> Self {
-        let pieces = Self::create_pieces(start_board);
-        let pairs = Self::create_pairs(start_board, goal_mask, &pieces);
+    pub fn new(start: Board, goal_mask: BitPattern) -> Self {
+        let pieces = Self::create_pieces(&start);
+        let pairs = Self::create_pairs(&start, &goal_mask, &pieces);
         Self {
-            start: start_board.clone(),
+            start,
             pieces,
             pairs,
-            goal_mask: *goal_mask,
+            goal_mask,
         }
     }
 
@@ -213,8 +223,8 @@ mod tests {
     fn rule_new_should_initialize_fields() {
         // Arrange & Act
         let rule = Rule::new(
-            &Board::new(0x2113_2113_4556_4786_900a),
-            &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
+            Board::new(0x2113_2113_4556_4786_900a),
+            BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
         );
 
         // Assert#1
@@ -255,8 +265,8 @@ mod tests {
     fn rule_new_should_handle_asymmetric_goal() {
         // Arrange & Act
         let rule = Rule::new(
-            &Board::new(0x2113_2113_4556_7896_700a),
-            &BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
+            Board::new(0x2113_2113_4556_7896_700a),
+            BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
         );
 
         // Assert#1
@@ -287,8 +297,8 @@ mod tests {
     fn is_finished_should_return_true_for_goal() {
         // Arrange
         let rule = Rule::new(
-            &Board::new(0x2113_2113_4556_4786_900a),
-            &BitPattern::new(0x0ff0_0ff0_0000_0000_0000),
+            Board::new(0x2113_2113_4556_4786_900a),
+            BitPattern::new(0x0ff0_0ff0_0000_0000_0000),
         );
         let goal_board = Board::new(0x2113_2113_4556_4786_900a);
 

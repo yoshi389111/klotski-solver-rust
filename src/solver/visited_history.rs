@@ -44,22 +44,27 @@ impl<T: Eq + Hash> VisitedHistory<T> {
                 log::debug!("Depth: {depth}");
             }
         }
-        if self.contains(&node) {
+        if self.is_visited(&node) {
             false
         } else {
-            self.current.insert(node);
+            self.mark_visited(node);
             true
         }
     }
 
-    fn contains(&self, node: &T) -> bool {
+    fn is_visited(&self, node: &T) -> bool {
         self.current.contains(node)
             || self.previous.contains(node)
             || self.pre_previous.contains(node)
     }
 
+    fn mark_visited(&mut self, node: T) {
+        self.current.insert(node);
+    }
+
     fn advance_generation(&mut self) {
-        self.pre_previous = std::mem::take(&mut self.previous);
-        self.previous = std::mem::take(&mut self.current);
+        let current = std::mem::take(&mut self.current);
+        let previous = std::mem::replace(&mut self.previous, current);
+        self.pre_previous = previous;
     }
 }

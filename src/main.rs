@@ -1,5 +1,5 @@
 use clap::Parser;
-use klotski::RuleError;
+use klotski::{Direction, Piece, Rule, RuleError, State, solve};
 
 /// Command-line arguments for the Klotski solver.
 #[derive(Debug, Parser)]
@@ -22,34 +22,66 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 /// Runs the Klotski solver with the provided arguments.
 fn run(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
-    let rule = klotski::Rule::parse(&args.start_image, &args.goal_mask).unwrap_or_else(|e| {
-        let message = convert_error_to_string(e);
-        eprintln!("Error: {message}");
-        std::process::exit(1);
-    });
+    let rule = Rule::parse(&args.start_image, &args.goal_mask).map_err(convert_error_to_str)?;
 
-    let Some(path) = klotski::solve(&rule) else {
+    if let Some(path) = solve(&rule) {
+        path.iter()
+            .enumerate()
+            .for_each(|(i, state)| output_state(i, state));
+    } else {
         println!("path not found.");
-        return Ok(());
     };
 
-    for (i, state) in path.iter().enumerate() {
-        if let Some(piece) = state.piece {
-            let p = &state.path;
-            println!("step {i}: Move piece #{piece}: {p}");
-        }
-    }
     Ok(())
 }
 
-fn convert_error_to_string(e: RuleError) -> &'static str {
+fn convert_error_to_str(e: RuleError) -> &'static str {
     match e {
         RuleError::InvalidStartBoardHexLength => "START_IMAGE must fit in 20 hex digits.",
-        RuleError::StartBoardInvalidEmptyCount => "START_IMAGE must have only two empty spaces.",
-        RuleError::FirstPieceMissingInStartBoard => "START_IMAGE must have the #1 large piece.",
+        RuleError::InvalidStartBoardEmptyCount => "START_IMAGE must have only two empty spaces.",
+        RuleError::MissingLargePiece => "START_IMAGE must have the #1 large piece.",
         RuleError::InvalidPieceShape => "START_IMAGE contains an invalid piece shape.",
         RuleError::InvalidGoalMaskHexLength => "GOAL_MASK must fit in 20 hex digits.",
-        RuleError::GoalmaskInvalidError => "GOAL_MASK is an invalid mask for the goal positions.",
-        RuleError::GoalMaskShapeError => "GOAL_MASK has an invalid shape.",
+        RuleError::InvalidGoalMaskEmptyCount => {
+            "GOAL_MASK is an invalid mask for the goal positions."
+        }
+        RuleError::InvalidGoalMaskShape => "GOAL_MASK has an invalid shape.",
     }
+}
+
+fn output_state(i: usize, state: &State) {
+    match state {
+        State::Initial { .. } => {}
+        State::SingleStep {
+            piece, direction, ..
+        } => {
+            let piece = convert_piece_to_string(*piece);
+            let direction = convert_direction_to_str(*direction);
+            println!("step {i}: Move piece #{piece}: {direction}");
+        }
+        State::DoubleStep {
+            piece,
+            first_direction,
+            second_direction,
+            ..
+        } => {
+            let piece = convert_piece_to_string(*piece);
+            let first_direction = convert_direction_to_str(*first_direction);
+            let second_direction = convert_direction_to_str(*second_direction);
+            println!("step {i}: Move piece #{piece}: {first_direction} and {second_direction}");
+        }
+    }
+}
+
+fn convert_direction_to_str(direction: Direction) -> &'static str {
+    match direction {
+        Direction::Up => "Up",
+        Direction::Down => "Down",
+        Direction::Left => "Left",
+        Direction::Right => "Right",
+    }
+}
+
+fn convert_piece_to_string(piece: Piece) -> String {
+    format!("{:x}", piece.id)
 }

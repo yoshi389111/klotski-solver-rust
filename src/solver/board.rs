@@ -1,16 +1,19 @@
-use super::BitPattern;
-use super::Direction;
-use super::Piece;
+use super::{BitPattern, Direction, Piece};
 
+/// The board of the Klotski puzzle.
+/// It has a 4x5 grid of cells, where a single hexadecimal digit represents the piece ID.
+/// There are the following four types of pieces, and there are two cells where no piece is placed.
+///
+/// - 2x2 piece (ID: 0x1)
+/// - 2x1 piece (ID: 0x2 - 0xf)
+/// - 1x2 piece (ID: 0x2 - 0xf)
+/// - 1x1 piece (ID: 0x2 - 0xf)
+///
+/// The goal of this puzzle is to move the large piece (2x2) to the position indicated by the goal mask.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Board {
     pub pattern: BitPattern,
 }
-
-static EDGE_TOP: BitPattern = BitPattern::new(0xffff_0000_0000_0000_0000);
-static EDGE_BOTTOM: BitPattern = BitPattern::new(0x0000_0000_0000_0000_ffff);
-static EDGE_LEFT: BitPattern = BitPattern::new(0xf000_f000_f000_f000_f000);
-static EDGE_RIGHT: BitPattern = BitPattern::new(0x000f_000f_000f_000f_000f);
 
 impl Board {
     /// Creates a new `Board` from a 128-bit integer representation.
@@ -27,10 +30,10 @@ impl Board {
     pub fn move_piece(&self, piece: Piece, direction: Direction) -> Option<Board> {
         let piece_mask = self.pattern.mask_of(piece);
         let edge_mask = match direction {
-            Direction::Up => EDGE_TOP,
-            Direction::Down => EDGE_BOTTOM,
-            Direction::Left => EDGE_LEFT,
-            Direction::Right => EDGE_RIGHT,
+            Direction::Up => BitPattern::new(0xffff_0000_0000_0000_0000),
+            Direction::Down => BitPattern::new(0x0000_0000_0000_0000_ffff),
+            Direction::Left => BitPattern::new(0xf000_f000_f000_f000_f000),
+            Direction::Right => BitPattern::new(0x000f_000f_000f_000f_000f),
         };
         if (edge_mask & piece_mask).is_not_empty() {
             // The target piece is on the edge.

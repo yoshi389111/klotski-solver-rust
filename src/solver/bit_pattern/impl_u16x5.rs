@@ -1,5 +1,4 @@
-use super::super::Direction;
-use super::super::Piece;
+use super::super::{Direction, Piece};
 
 /// The size of the bit pattern (number of rows).
 const SIZE: usize = 5;
@@ -58,18 +57,21 @@ impl BitPattern {
         }
     }
 
+    /// Moves the bit pattern up by one row.
     fn moved_up(&self) -> Self {
         let mut new_array = [0; SIZE];
         new_array[..(SIZE - 1)].copy_from_slice(&self.array[1..]);
         Self::from_u16_array(new_array)
     }
 
+    /// Moves the bit pattern down by one row.
     fn moved_down(&self) -> Self {
         let mut new_array = [0; SIZE];
         new_array[1..].copy_from_slice(&self.array[..(SIZE - 1)]);
         Self::from_u16_array(new_array)
     }
 
+    /// Moves the bit pattern left by one column.
     fn moved_left(&self) -> Self {
         let mut new_array = self.array;
         for m in new_array.iter_mut() {
@@ -78,6 +80,7 @@ impl BitPattern {
         Self::from_u16_array(new_array)
     }
 
+    /// Moves the bit pattern right by one column.
     fn moved_right(&self) -> Self {
         let mut new_array = self.array;
         for m in new_array.iter_mut() {
