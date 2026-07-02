@@ -1,5 +1,4 @@
-use super::super::Direction;
-use super::super::Piece;
+use super::super::{Direction, Piece};
 
 /// A bit pattern representing the state of a board in a puzzle game.
 ///
@@ -45,20 +44,24 @@ impl BitPattern {
         }
     }
 
+    /// Moves the bit pattern up by one row.
     fn moved_up(&self) -> Self {
         Self {
             pattern: (self.pattern << 16) & BIT_PATTERN_MASK,
         }
     }
 
+    /// Moves the bit pattern down by one row.
     fn moved_down(&self) -> Self {
         Self::new((self.pattern >> 16) & BIT_PATTERN_MASK)
     }
 
+    /// Moves the bit pattern left by one column.
     fn moved_left(&self) -> Self {
         Self::new((self.pattern << 4) & 0xfff0_fff0_fff0_fff0_fff0)
     }
 
+    /// Moves the bit pattern right by one column.
     fn moved_right(&self) -> Self {
         Self::new((self.pattern >> 4) & 0x0fff_0fff_0fff_0fff_0fff)
     }
