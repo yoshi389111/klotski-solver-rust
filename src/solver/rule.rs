@@ -29,7 +29,7 @@ pub enum RuleError {
     InvalidGoalMaskHexLength,
     /// The goal mask does not have exactly 16 empty spaces.
     InvalidGoalMaskEmptyCount,
-    /// The goal mask is missing the large piece.
+    /// The goal mask does not contain the expected large piece (2x2) shape.
     InvalidGoalMaskShape,
 }
 
