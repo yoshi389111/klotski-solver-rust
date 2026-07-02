@@ -27,7 +27,7 @@ pub fn solve(rule: &Rule) -> Option<Vec<State>> {
 /// Creates the next possible states from the current state based on the given rule.
 fn get_neighbors(rule: &Rule, state: &State) -> Vec<State> {
     let mut next_states = vec![];
-    let current_board = &state.board();
+    let current_board = state.board();
     for &piece in &rule.pieces {
         if let Some(last_moved_piece) = state.piece()
             && last_moved_piece == piece
