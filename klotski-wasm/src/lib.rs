@@ -1,4 +1,4 @@
-use klotski_core::{self, BfsSolver, Direction, KlotskiProblem, Piece, Rule, RuleError, State};
+use klotski_core::{BfsSolver, Direction, KlotskiProblem, Piece, Rule, RuleError, State};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -27,34 +27,34 @@ impl KlotskiSolver {
     }
 
     #[wasm_bindgen]
-    pub fn expand_level(&mut self) -> Result<(), String> {
-        let Some(solver) = &mut self.solver else {
-            return Err("Solver is not initialized. Please set the start board first.".to_string());
-        };
-        if solver.is_finished() {
-            return Ok(());
+    pub fn expand_level(&mut self) {
+        if self.result.is_some() {
+            return;
         }
+
+        let Some(solver) = &mut self.solver else {
+            return;
+        };
+
         solver.expand_level();
-        Ok(())
+        if solver.is_finished() {
+            self.result = self
+                .solver
+                .take()
+                .expect("solver was just checked")
+                .find_path();
+        }
     }
 
     #[wasm_bindgen]
     pub fn is_finished(&self) -> bool {
-        if self.result.is_some() {
-            return true;
-        }
-
-        let Some(solver) = &self.solver else {
-            return false;
-        };
-
-        solver.is_finished()
+        self.solver.is_none()
     }
 
     #[wasm_bindgen]
     pub fn get_result(&mut self) -> String {
         let Some(path) = &self.result else {
-            return "".to_string();
+            return "path not found.".to_string();
         };
 
         path.iter()
