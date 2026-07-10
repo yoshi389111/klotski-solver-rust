@@ -1,5 +1,5 @@
 /// The four possible directions in which a piece can be moved.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Hash)]
 pub enum Direction {
     Up,
     Down,

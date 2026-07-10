@@ -1,5 +1,18 @@
-use super::{BitPattern, Board, Direction, Piece, Rule, State, VisitedHistory};
+mod bit_pattern;
+mod board;
+mod direction;
+mod piece;
+mod rule;
+mod state;
+
 use crate::bfs;
+pub use bit_pattern::BitPattern;
+pub use board::Board;
+pub use direction::Direction;
+pub use piece::Piece;
+pub use rule::{Rule, RuleError};
+pub use state::State;
+use std::collections::HashSet;
 
 /// All possible directions for moving pieces in the puzzle.
 const ALL_DIRECTIONS: &[Direction] = &[
@@ -9,23 +22,77 @@ const ALL_DIRECTIONS: &[Direction] = &[
     Direction::Right,
 ];
 
-/// Solves the klotski puzzle using a breadth-first search algorithm.
-pub fn solve(rule: &Rule) -> Option<Vec<State>> {
-    let board = rule.start.clone();
-    let initial_state = State::Initial { board };
+#[derive(Debug)]
+pub struct KlotskiProblem {
+    rule: Rule,
 
-    let is_goal = |s: &State| rule.is_finished(s.board());
-    let neighbors = |s: &State| get_neighbors(rule, s);
+    current: HashSet<BoardKey>,
+    previous: HashSet<BoardKey>,
+    pre_previous: HashSet<BoardKey>,
 
-    let mut visited = VisitedHistory::new();
-    let try_visit =
-        |s: &State, depth: usize| visited.try_visit(BoardKey::create(rule, s.board()), depth);
-
-    bfs::find_path(&initial_state, is_goal, neighbors, try_visit)
+    depth: usize,
 }
 
-/// Creates the next possible states from the current state based on the given rule.
-fn get_neighbors(rule: &Rule, state: &State) -> Vec<State> {
+impl KlotskiProblem {
+    pub fn create_solver(rule: Rule) -> bfs::BfsSolver<State, Self> {
+        bfs::BfsSolver::new(
+            &State::Initial {
+                board: rule.start.clone(),
+            },
+            Self::new(rule),
+        )
+    }
+
+    pub fn new(rule: Rule) -> Self {
+        Self {
+            rule,
+            current: HashSet::new(),
+            previous: HashSet::new(),
+            pre_previous: HashSet::new(),
+            depth: 0,
+        }
+    }
+
+    fn is_visited(&self, key: &BoardKey) -> bool {
+        self.current.contains(key) || self.previous.contains(key) || self.pre_previous.contains(key)
+    }
+
+    fn mark_visited(&mut self, key: BoardKey) {
+        self.current.insert(key);
+    }
+
+    fn advance_level(&mut self) {
+        let current = std::mem::take(&mut self.current);
+        let previous = std::mem::replace(&mut self.previous, current);
+        self.pre_previous = previous;
+    }
+}
+
+impl bfs::SearchProblem<State> for KlotskiProblem {
+    fn is_goal(&self, state: &State) -> bool {
+        self.rule.is_finished(state.board())
+    }
+
+    fn neighbors(&self, state: &State) -> Vec<State> {
+        neighbors(&self.rule, state)
+    }
+
+    fn try_visit(&mut self, state: &State, depth: usize) -> bool {
+        let key = BoardKey::create(&self.rule, state.board());
+        if depth != self.depth {
+            self.advance_level();
+            self.depth = depth;
+        }
+        if self.is_visited(&key) {
+            false
+        } else {
+            self.mark_visited(key);
+            true
+        }
+    }
+}
+
+fn neighbors(rule: &Rule, state: &State) -> Vec<State> {
     let mut next_states = vec![];
     let current_board = state.board();
     for &piece in &rule.pieces {
@@ -102,7 +169,6 @@ impl BoardKey {
 
 #[cfg(test)]
 mod tests {
-    use super::super::*;
     use super::*;
 
     #[test]
@@ -112,8 +178,11 @@ mod tests {
             Board::new(0x2112_2112_3344_5678_5008),
             BitPattern::new(0x0000_0000_0000_0ff0_0ff0),
         );
+        let solver = KlotskiProblem::create_solver(rule);
+
         // Act
-        let result = solve(&rule);
+        let result = solver.find_path();
+
         // Assert
         assert_eq!(result, None);
     }
@@ -130,7 +199,7 @@ mod tests {
         };
 
         // Act
-        let neighbors = get_neighbors(&rule, &state);
+        let neighbors = neighbors(&rule, &state);
 
         // Assert
         assert_eq!(

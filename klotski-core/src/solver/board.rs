@@ -1,4 +1,5 @@
 use super::{BitPattern, Direction, Piece};
+use std::hash::Hash;
 
 /// The board of the Klotski puzzle.
 /// It has a 4x5 grid of cells, where a single hexadecimal digit represents the piece ID.
@@ -10,7 +11,7 @@ use super::{BitPattern, Direction, Piece};
 /// - 1x1 piece (ID: 0x2 - 0xf)
 ///
 /// The goal of this puzzle is to move the large piece (2x2) to the position indicated by the goal mask.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct Board {
     pub pattern: BitPattern,
 }
