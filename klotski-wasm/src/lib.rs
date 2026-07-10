@@ -22,6 +22,7 @@ impl KlotskiSolver {
         let rule =
             Rule::parse(start_board, goal_mask).map_err(|e| convert_error_to_str(e).to_string())?;
         self.solver = Some(KlotskiProblem::create_solver(rule));
+        self.result = None;
         Ok(())
     }
 
