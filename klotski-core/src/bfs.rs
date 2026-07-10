@@ -48,12 +48,16 @@ impl<T: Clone, V: SearchProblem<T>> BfsSolver<T, V> {
     /// Creates a new `BfsSolver`.
     pub fn new(start_state: &T, mut problem: V) -> Self {
         let mut queue = VecDeque::new();
-        let result_path = if problem.try_visit(start_state, 0) && problem.is_goal(start_state) {
+        let can_visit = problem.try_visit(start_state, 0);
+        let goaled = problem.is_goal(start_state);
+        let result_path = if can_visit && goaled {
             Some(vec![start_state.clone()])
         } else {
-            queue.push_back(Node::new(start_state.clone(), None));
             None
         };
+        if can_visit && !goaled {
+            queue.push_back(Node::new(start_state.clone(), None));
+        }
 
         BfsSolver {
             queue,
