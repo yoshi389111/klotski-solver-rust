@@ -1,7 +1,7 @@
 use super::{Board, Direction, Piece};
 
 /// State enum represents the different states of the puzzle during the solving process.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum State {
     /// The initial state of the puzzle.
     Initial { board: Board },

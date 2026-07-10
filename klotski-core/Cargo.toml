@@ -1,0 +1,9 @@
+[package]
+name = "klotski-core"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["impl_u128"]
+impl_u128 = []
+impl_u16x5 = []

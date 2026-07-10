@@ -1,5 +1,5 @@
 use clap::Parser;
-use klotski::{Direction, Piece, Rule, RuleError, State, solve};
+use klotski_core::{Direction, KlotskiProblem, Piece, Rule, RuleError, State};
 
 /// Command-line arguments for the Klotski solver.
 #[derive(Debug, Parser)]
@@ -14,17 +14,23 @@ struct Args {
 }
 
 /// Runs the Klotski solver with the provided arguments.
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<(), String> {
     env_logger::init();
     let args = Args::parse();
-    run(&args)
-}
 
-/// Runs the Klotski solver with the provided arguments.
-fn run(args: &Args) -> Result<(), Box<dyn std::error::Error>> {
     let rule = Rule::parse(&args.start_image, &args.goal_mask).map_err(convert_error_to_str)?;
+    let mut solver = KlotskiProblem::create_solver(rule);
 
-    if let Some(path) = solve(&rule) {
+    while !solver.is_finished() {
+        log::debug!(
+            "depth: {}, size: {}",
+            solver.depth_level(),
+            solver.queue_length()
+        );
+        solver.expand_level();
+    }
+
+    if let Some(path) = solver.into_path() {
         path.iter()
             .enumerate()
             .for_each(|(i, state)| output_state(i, state));

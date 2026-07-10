@@ -2,7 +2,7 @@ use super::{BitPattern, Board, Piece};
 use std::collections::HashMap;
 
 /// Rule struct holds the puzzle's initial state, piece list, symmetry pairs, and goal mask.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rule {
     /// The starting board state of the puzzle.
     pub start: Board,
